@@ -105,12 +105,12 @@ try:
             conn.close()
 
             if data == 0: # succeed code
-                root.info(f"connection on {ADDRESS}:{port} is open")
+                root.info(f"Connection on port {port} is open")
             else:
                 count += 1
         
-        root.info(f"Number of closed ports: {count}")
-            
+        root.info(f"closed port(s): {count}")
+
     else: # Single scan
         conn = so.socket(so.AF_INET, so.SOCK_STREAM)
 
@@ -118,9 +118,9 @@ try:
         conn.close()
 
         if data == 0: # succeed code
-            root.info(f"connection on {ADDRESS}:{port} is open")
+            root.info(f"Connection on port {port} is open")
         else:
-            root.info(f"connection on {ADDRESS}:{port} is closed")
+            root.info(f"Connection on port {port} is closed")
 
 except Exception as e:
     root.error(f"{e}")
