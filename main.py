@@ -1,46 +1,75 @@
-from datetime import datetime as dt, timedelta
+from utilities.time_duration import format_timedelta
+from utilities.logger import logging_function
+from datetime import datetime as dt
 from arguments import args
-import logging as lo
 import socket as so
+import sys
 
-# ================= LOGGER FOR STDOUT AND FILE =================
-format = "%(asctime)s - %(levelname)s - %(message)s"
-root = lo.getLogger()
-root.setLevel(lo.INFO)
+# ================= WELCOME MESSAGE =================
+print("############################################################")
+print("DISCLAIMER: THIS SCRIPT IS FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY.")
+print("AUTHOR TAKES NO RESPONSIBILITY FOR USER'S USAGE.")
+print("############################################################")
 
-fileHandler = lo.FileHandler("logger.txt")
-fileHandler.setFormatter(lo.Formatter(format, datefmt="%Y-%M-%d %H:%M:%S"))
-
-consoleHandler = lo.StreamHandler()
-consoleHandler.setFormatter(lo.Formatter(format, datefmt="%Y-%m-%d %H:%M:%S"))
-
-root.addHandler(fileHandler)
-root.addHandler(consoleHandler)
-
-# ================= CALCULATION FOR TIME DURATION =================
-def format_timedelta(tdelta: timedelta) -> str:
-    """
-    Formats a datetime.timedelta object into a string with the format HH:MM:SS:MS.
-
-    Parameters:
-        tdelta (datetime.timedelta): The time duration to format.
-
-    Returns:
-        str: The formatted duration string in the format "HH:MM:SS:MS".
-    """
-
-    total_seconds = int(tdelta.total_seconds())
-    hours, remainder = divmod(total_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    
-    ms = int(tdelta.microseconds / 100)
-    
-    return f"{hours:02}:{minutes:02}:{seconds:02}:{ms:04}"
+# ================= LOGGER =================
+root = logging_function()
 
 # ================= USER'S INPUT =================
+def get_ip_subnet(ip_addr: str):
+    """
+    Expands a subnet into a list of addresses
+
+    Parameters:
+        ip_addr (str): The IP address subnet (e.g. 192.168.1.1/24)
+    
+    Returns:
+        list (str): A list of IP addresses included in the given subnet
+    """
+    global subnet_class
+    try:
+        address = ip_addr.split("/")[0]
+        subnet_class = ip_addr.split("/")[1]
+        
+        if subnet_class == "32":
+            return address
+        elif subnet_class == "24":
+            seperate_addr = address.rsplit(".", 1)
+            static_ip = seperate_addr[0] # e.g. 192.168.1.X
+            
+            result = list()
+            for i in range(1, 255):
+                result.append(f"{static_ip}.{i}")
+
+            return tuple(result)
+        elif subnet_class == "16":
+            root.error("Refusing to scan public or unsafe IP ranges. Exiting for safety.")
+            sys.exit()
+
+        elif subnet_class == "8":
+            root.error("Refusing to scan public or unsafe IP ranges. Exiting for safety.")
+            sys.exit()
+
+        elif subnet_class == "0":
+            root.error("Refusing to scan the entire internet. Exiting for safety.")
+            sys.exit()
+
+        else:
+            pass
+
+    except Exception as e:
+        root.error(f"error in get_ip_subnet: {e}")
+
+subnet = False # Defalut value
+
 def get_ip_addr(value):
-    print(f"IP address to scan set to: {value}")
-    return value
+    global subnet
+    if "/" in value: # for range of IP addresses
+        subnet = True
+        return get_ip_subnet(value)
+    else: # for single IP address
+        subnet = False
+        print(f"IP address to scan set to: {value}")
+        return value
 
 def get_port(value): 
     if "-" not in value: # for single port like 80
@@ -81,6 +110,7 @@ while True:
         root.error("Port should be digits only.")
 
 # ================= MAIN CODE =================
+
 try: # for range scan
     start_port = int(data.port[0])
     end_port = int(data.port[1])
@@ -90,15 +120,66 @@ except: # for single scan
     mode = "single"
 
 time_start = dt.now()
-root.info(f"Starting scan on {data.address} ...")
+count = 0 # keep track of closed connections
 
 try:
+    so.setdefaulttimeout(0.5) # Timeout for all sockets
     ADDRESS = data.address
-    so.setdefaulttimeout(1) # Timeout for all sockets
 
     if mode == "range": # Range scan
-        count = 0 # keep track of closed connections
-        for port in range(start_port, end_port + 1):
+
+        if type(ADDRESS) == tuple: # range Ip scan
+            for i in range(len(ADDRESS)):
+                addr = str(ADDRESS[i])
+                
+                for port in range(start_port, end_port + 1):
+                    conn = so.socket(so.AF_INET, so.SOCK_STREAM)
+
+                    data = conn.connect_ex((addr, port))
+                    conn.close()
+
+                    if data == 0: # succeed code
+                        root.info(f"Connection on {addr}:{port} is open")
+                    else:
+                        count += 1
+            
+            root.info(f"closed port(s): {count}")
+        
+        else: # range port for single IP address
+            root.info(f"Starting scan on {ADDRESS}")
+            for port in range(start_port, end_port + 1):
+                    conn = so.socket(so.AF_INET, so.SOCK_STREAM)
+
+                    data = conn.connect_ex((ADDRESS, port))
+                    conn.close()
+
+                    if data == 0: # succeed code
+                        root.info(f"Connection on {ADDRESS}:{port} is open")
+                    else:
+                        count += 1
+            
+            root.info(f"closed port(s): {count}")
+
+    else: # Single port scan
+
+        if type(ADDRESS) == tuple: # for range of ip address
+            for i in range(len(ADDRESS)):
+                addr = str(ADDRESS[i])
+
+                conn = so.socket(so.AF_INET, so.SOCK_STREAM)
+
+                data = conn.connect_ex((addr, port))
+                conn.close()
+
+                if data == 0: # succeed code
+                    root.info(f"Connection on {addr}:{port} is open")
+                else:
+                    count += 1
+
+            root.info(f"closed port(s): {count}")
+
+        else: #for single ip
+            root.info(f"Starting scan on {ADDRESS}")
             conn = so.socket(so.AF_INET, so.SOCK_STREAM)
 
             data = conn.connect_ex((ADDRESS, port))
@@ -107,23 +188,14 @@ try:
             if data == 0: # succeed code
                 root.info(f"Connection on port {port} is open")
             else:
-                count += 1
-        
-        root.info(f"closed port(s): {count}")
+                root.info(f"Connection on port {port} is closed")
 
-    else: # Single scan
-        conn = so.socket(so.AF_INET, so.SOCK_STREAM)
-
-        data = conn.connect_ex((ADDRESS, port))
-        conn.close()
-
-        if data == 0: # succeed code
-            root.info(f"Connection on port {port} is open")
-        else:
-            root.info(f"Connection on port {port} is closed")
+except KeyboardInterrupt:
+    root.error("Ctrl+C pressed. exiting...")
+    sys.exit()
 
 except Exception as e:
-    root.error(f"{e}")
+    root.error(f"error in main code: {e}")
 
 # calculating time duration
 time_end = dt.now()
