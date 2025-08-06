@@ -6,6 +6,7 @@ A simple command-line port scanner written in Python.
 
 - Uses Python built-in modules
 - Supports TCP scanning
+- Supports single and range IP scan
 - CLI argument support with fallback to interactive mode
 
 ## Usage
