@@ -10,20 +10,25 @@ print("############################################################")
 print("DISCLAIMER: THIS SCRIPT IS FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY.")
 print("AUTHOR TAKES NO RESPONSIBILITY FOR USER'S USAGE.")
 print("############################################################")
+print()
 
 # ================= LOGGER =================
 root = logging_function()
 
-# ================= USER'S INPUT =================
+# ================= IP RANGE HANDLING FUNCTIONS =================
 def get_ip_subnet(ip_addr: str):
     """
-    Expands a subnet into a list of addresses
+    Expands a subnet into a list of IP addresses.
 
     Parameters:
-        ip_addr (str): The IP address subnet (e.g. 192.168.1.1/24)
-    
+        ip_addr (str): The subnet in CIDR notation (e.g., "192.168.1.0/24").
+
     Returns:
-        list (str): A list of IP addresses included in the given subnet
+        tuple:
+            - A tuple of IP addresses if the expansion is successful.
+
+        #### str
+            - A string of single IP address for /32 subnet.
     """
     global subnet_class
     try:
@@ -34,7 +39,7 @@ def get_ip_subnet(ip_addr: str):
             return address
         elif subnet_class == "24":
             seperate_addr = address.rsplit(".", 1)
-            static_ip = seperate_addr[0] # e.g. 192.168.1.X
+            static_ip = seperate_addr[0]
             
             result = list()
             for i in range(1, 255):
@@ -59,13 +64,53 @@ def get_ip_subnet(ip_addr: str):
     except Exception as e:
         root.error(f"error in get_ip_subnet: {e}")
 
+def get_ip_range(ip_addr):
+    """
+    Expands a IP range into a list of IP addresses.
+
+    Parameters:
+        ip_addr (str): IP address (e.g., "192.168.10.15-30").
+
+    Returns:
+        tuple:
+            - A tuple of IP addresses if the expansion is successful.
+
+        #### str
+            - A string of a single IP address.
+    """
+    fragments = ip_addr.split(".")
+    
+    if len(fragments) < 4: # error handling (e.g. 192.168.10-15)
+        root.error("IP address is wrong.")
+        return None
+    
+    range_value = fragments[-1]
+    static_ip = ".".join(fragments[:-1])
+    
+    if "-" in static_ip:
+        root.error("IP range scan supports last digit only")
+        print("Right format: 192.168.1.1-10")
+        print("Wrong formats: 192.168.1-10.1 , 192.168-188.1.1")
+        return None
+
+    start_range, end_range = range_value.split("-")
+    
+    result = list()
+    for i in range(int(start_range), int(end_range) + 1):
+        result.append(f"{static_ip}.{i}")
+    
+    return tuple(result)
+
+# ================= USER'S INPUT =================
 subnet = False # Defalut value
 
 def get_ip_addr(value):
     global subnet
-    if "/" in value: # for range of IP addresses
+    if "/" in value: # for IP address with subnet mask
         subnet = True
         return get_ip_subnet(value)
+    elif "-" in value: # for range IP address
+        return get_ip_range(value)
     else: # for single IP address
         subnet = False
         print(f"IP address to scan set to: {value}")
@@ -78,7 +123,7 @@ def get_port(value):
             return int(value)
         else:
             return None
-    
+
     else: # for a range of ports like 80-144
         parts = value.split("-")
         if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
@@ -88,7 +133,7 @@ def get_port(value):
         else:
             return None
 
-data = args(get_port=get_port, get_host=get_ip_addr) # arguments function
+data = args(get_host=get_ip_addr, get_port=get_port) # arguments function
 
 while True:
     try:
@@ -108,7 +153,11 @@ while True:
 
     except (TypeError, ValueError):
         root.error("Port should be digits only.")
-
+    
+    except KeyboardInterrupt:
+        print()
+        root.error("Ctrl+C pressed. exiting...")
+        sys.exit()
 # ================= MAIN CODE =================
 
 try: # for range scan
@@ -120,7 +169,7 @@ except: # for single scan
     mode = "single"
 
 time_start = dt.now()
-count = 0 # keep track of closed connections
+count = 1 # keep track of closed connections
 
 try:
     so.setdefaulttimeout(0.5) # Timeout for all sockets
@@ -144,6 +193,7 @@ try:
                         count += 1
             
             root.info(f"closed port(s): {count}")
+            root.info(f"Host scaned: {len(ADDRESS)}")
         
         else: # range port for single IP address
             root.info(f"Starting scan on {ADDRESS}")
@@ -177,6 +227,7 @@ try:
                     count += 1
 
             root.info(f"closed port(s): {count}")
+            root.info(f"Host scaned: {len(ADDRESS)}")
 
         else: #for single ip
             root.info(f"Starting scan on {ADDRESS}")
@@ -192,6 +243,7 @@ try:
 
 except KeyboardInterrupt:
     root.error("Ctrl+C pressed. exiting...")
+    conn.close()
     sys.exit()
 
 except Exception as e:
