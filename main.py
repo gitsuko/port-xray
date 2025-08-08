@@ -2,15 +2,10 @@ from utilities.time_duration import format_timedelta
 from utilities.logger import logging_function
 from datetime import datetime as dt
 from arguments import args
+import logging as lo
 import socket as so
 import sys
 
-# ================= WELCOME MESSAGE =================
-print("############################################################")
-print("DISCLAIMER: THIS SCRIPT IS FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY.")
-print("AUTHOR TAKES NO RESPONSIBILITY FOR USER'S USAGE.")
-print("############################################################")
-print()
 
 # ================= LOGGER =================
 root = logging_function()
@@ -113,7 +108,7 @@ def get_ip_addr(value):
         return get_ip_range(value)
     else: # for single IP address
         subnet = False
-        print(f"IP address to scan set to: {value}")
+        print(f"Host to scan set to: {value}")
         return value
 
 def get_port(value): 
@@ -133,7 +128,29 @@ def get_port(value):
         else:
             return None
 
-data = args(get_host=get_ip_addr, get_port=get_port) # arguments function
+def get_timeout(time=0.5):
+    try:
+        if time:
+            return int(time)
+        else:
+            return 0.5
+    except (TypeError, ValueError):
+        root.info("time out value must be digit")
+        sys.exit(1)
+
+data = args(get_host=get_ip_addr, get_port=get_port, get_timeout=get_timeout) # arguments function
+
+# check verbosity
+if data.verbose:
+    root.setLevel(lo.DEBUG)
+
+# check for legal message
+if data.legal:
+    print("############################################################")
+    print("DISCLAIMER: THIS SCRIPT IS FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY.")
+    print("AUTHOR TAKES NO RESPONSIBILITY FOR USER'S USAGE.")
+    print("############################################################")
+    print()
 
 while True:
     try:
@@ -168,16 +185,21 @@ except: # for single scan
     port = data.port
     mode = "single"
 
+root.debug("[TIME] Starting time for calculating duration")
 time_start = dt.now()
-count = 1 # keep track of closed connections
+count = 0 # keep track of closed connections
 
 try:
-    so.setdefaulttimeout(0.5) # Timeout for all sockets
+    time_out = data.time_out
+    if time_out is None:
+        time_out = 0.5
+    so.setdefaulttimeout(time_out) # Timeout for all sockets
+    root.debug(f"[SOCKET TIMEOUT] Set socket timeout to {time_out}s")
     ADDRESS = data.address
 
     if mode == "range": # Range scan
-
         if type(ADDRESS) == tuple: # range Ip scan
+            root.debug("[TAGET] Preparing IP ranges for scan")
             for i in range(len(ADDRESS)):
                 addr = str(ADDRESS[i])
                 
@@ -188,12 +210,14 @@ try:
                     conn.close()
 
                     if data == 0: # succeed code
-                        root.info(f"Connection on {addr}:{port} is open")
+                        if not root.debug(f"Connection on {addr}:{port} is open"):
+                            root.info(f"Connection on {addr}:{port} is open") 
                     else:
+                        root.debug(f"Connection on {addr}:{port} is close")
                         count += 1
             
             root.info(f"closed port(s): {count}")
-            root.info(f"Host scaned: {len(ADDRESS)}")
+            root.info(f"Total host scanned: {len(ADDRESS)}")
         
         else: # range port for single IP address
             root.info(f"Starting scan on {ADDRESS}")
@@ -206,6 +230,7 @@ try:
                     if data == 0: # succeed code
                         root.info(f"Connection on {ADDRESS}:{port} is open")
                     else:
+                        root.debug(f"Connection on {ADDRESS}:{port} is closed")
                         count += 1
             
             root.info(f"closed port(s): {count}")
@@ -213,6 +238,7 @@ try:
     else: # Single port scan
 
         if type(ADDRESS) == tuple: # for range of ip address
+            root.debug("[TAGET] Preparing IP ranges for scan")
             for i in range(len(ADDRESS)):
                 addr = str(ADDRESS[i])
 
@@ -224,10 +250,11 @@ try:
                 if data == 0: # succeed code
                     root.info(f"Connection on {addr}:{port} is open")
                 else:
+                    root.debug(f"Connection on {addr}:{port} is closed")
                     count += 1
 
             root.info(f"closed port(s): {count}")
-            root.info(f"Host scaned: {len(ADDRESS)}")
+            root.info(f"Total host scanned: {len(ADDRESS)}")
 
         else: #for single ip
             root.info(f"Starting scan on {ADDRESS}")
@@ -250,6 +277,7 @@ except Exception as e:
     root.error(f"error in main code: {e}")
 
 # calculating time duration
+root.debug("[TIME] Stopping time for calculating duration")
 time_end = dt.now()
 time_duration = time_end - time_start
 root.info(f"scan took {format_timedelta(time_duration)}")
