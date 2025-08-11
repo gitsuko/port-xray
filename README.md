@@ -1,11 +1,11 @@
 # port-xray
 
-A simple command-line port scanner written in Python.
+A Python-based port scanner tool that supports service version grabbing.
 
 ## Features
 
-- Uses Python built-in modules
 - Supports TCP scanning
+- Supports service version grabbing
 - Supports single and range IP scan
 - CLI argument support with fallback to interactive mode
 
@@ -21,16 +21,10 @@ Or pass command-line arguments:
 ```bash
 python3 main.py -a 127.0.0.1 -p 80
 ```
-Use -h or --help to display available options.
 
 ## Arguments
-`-a ADDRESS`, `--address ADDRESS`
+![Arguments.png](./img/arguments.png)
 
-Target IP address to scan.
-
-`-p PORT`, `--port PORT`
-
-Port(s) to scan. Supports a single port (80) or a range (20-100).
 
 ## Planned Features
 
