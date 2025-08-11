@@ -6,18 +6,18 @@ def args(get_host, get_port, get_timeout):
     Currect protocol supprting: TCP.
     
     Examples:
-        python3 main.py -a 192.168.10.10 -p 22
-        python3 main.py -a 192.168.10.10/24 -p 80-443
-        python3 main.py -a 192.168.10.10-20 -p 80"""
+        python3 main.py -a 192.168.10.10 -p 22 -v
+        python3 main.py -a 192.168.10.10/24 -p 80-443 -t 2
+        python3 main.py -a 192.168.10.10-20 -p 80 -s"""
 
     parser = argparse.ArgumentParser(
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    
+
     parser.add_argument(
         "-a", "--address",
         type=get_host,
-        help="IP address to scan."
+        help="IP address to scan"
     )
 
     parser.add_argument(
@@ -28,9 +28,9 @@ def args(get_host, get_port, get_timeout):
     )
 
     parser.add_argument(
-    "--legal",
-    action="store_true",
-    help="Shows the disclaimer message"
+        "-s", "--service-info",
+        action="store_true",
+        help="Shows service version running on host"
     )
 
     parser.add_argument(
@@ -43,6 +43,12 @@ def args(get_host, get_port, get_timeout):
         "-t", "--time-out",
         type=get_timeout,
         help="Set time out for socket. default = 0.5",
+    )
+
+    parser.add_argument(
+        "--legal",
+        action="store_true",
+        help="Shows the disclaimer message"
     )
 
     return parser.parse_args()
