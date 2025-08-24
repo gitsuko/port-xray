@@ -31,3 +31,12 @@ python3 main.py -a 127.0.0.1 -p 80
 - Add support for UDP scanning
 
 - Parallel (multi-threaded) scanning for speed
+
+## Contribution
+
+Contributions are welcome. Feel free to open an issue or a pull request.
+
+## DISCLAIMER
+
+This script is for educational and research purposes only.
+Use at your own risk — the author takes no responsibility.
