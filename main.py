@@ -147,10 +147,10 @@ if data.verbose:
 
 # Check for legal message
 if data.legal:
-    print("############################################################")
+    print("##########################################################")
     print("DISCLAIMER: THIS SCRIPT IS FOR EDUCATIONAL AND RESEARCH PURPOSES ONLY.")
-    print("AUTHOR TAKES NO RESPONSIBILITY FOR USER'S USAGE.")
-    print("############################################################")
+    print("Use at your own risk — the author takes no responsibility.")
+    print("##########################################################")
     print()
 
 banner = False
@@ -195,6 +195,8 @@ root.debug("[TIME] Starting time for calculating duration")
 time_start = datetime.now()
 count = 0 # Keep track of closed connections
 
+print("Scan on ", time_start.strftime("%Y, %B %d - %H:%M:%S"))
+
 try:
     time_out = data.time_out
     if time_out is None:
@@ -206,9 +208,10 @@ try:
     if mode == "range":
         if type(ADDRESS) == tuple: # Range of IP address
             root.debug("[TAGET] Preparing IP ranges for scan")
+            print()
             for i in range(len(ADDRESS)):
                 addr = str(ADDRESS[i])
-                
+                print(f"Starting scan on {addr}")
                 for port in range(start_port, end_port + 1):
                     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -216,32 +219,34 @@ try:
                     conn.close()
 
                     if data == 0: # Succeed code
-                        root.info(f"Connection on {addr}:{port} is open")
+                        root.info(f"{port}/tcp is open")
                         if banner == True:
                             print(get_banner(addr, port))
                     else:
-                        root.debug(f"Connection on {addr}:{port} is close")
+                        root.debug(f"{port}/tcp is close")
                         count += 1
-            
+            print()
             root.info(f"closed port(s): {count}")
             root.info(f"Total host scanned: {len(ADDRESS)}")
         
         else: # Single IP address
             root.info(f"Starting scan on {ADDRESS}")
+            print()
             for port in range(start_port, end_port + 1):
                     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
                     data = conn.connect_ex((ADDRESS, port))
                     conn.close()
-
+                    
                     if data == 0: # Succeed code
-                        root.info(f"Connection on {ADDRESS}:{port} is open")
+                        root.info(f"{port}/tcp is open")
                         if banner == True:
                             print(get_banner(ADDRESS, port))
                     else:
-                        root.debug(f"Connection on {ADDRESS}:{port} is closed")
+                        root.debug(f"{port}/tcp is closed")
                         count += 1
-            
+                    
+            print()
             root.info(f"closed port(s): {count}")
 
     # ============ SINGLE PORT SCAN ============
@@ -249,8 +254,10 @@ try:
 
         if type(ADDRESS) == tuple: # Range of IP address
             root.debug("[TAGET] Preparing IP ranges for scan")
+            print()
             for i in range(len(ADDRESS)):
                 addr = str(ADDRESS[i])
+                print(f"Starting scan on {addr}")
 
                 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -258,13 +265,13 @@ try:
                 conn.close()
 
                 if data == 0: # Succeed code
-                    root.info(f"Connection on {addr}:{port} is open")
+                    root.info(f"{port}/tcp is open")
                     if banner == True:
                         print(get_banner(addr, port))
                 else:
-                    root.debug(f"Connection on {addr}:{port} is closed")
+                    root.debug(f"{port}/tcp is closed")
                     count += 1
-
+            print()
             root.info(f"closed port(s): {count}")
             root.info(f"Total host scanned: {len(ADDRESS)}")
 
@@ -274,13 +281,14 @@ try:
 
             data = conn.connect_ex((ADDRESS, port))
             conn.close()
-
+            print()
             if data == 0: # Succeed code
-                root.info(f"Connection on port {port} is open")
+                root.info(f"{port}/tcp is open")
                 if banner == True:
                     print(get_banner(ADDRESS, port))
             else:
-                root.info(f"Connection on port {port} is closed")
+                root.info(f"{port}/tcp is closed")
+            print()
 
 except KeyboardInterrupt:
     root.error("Ctrl+C pressed. exiting...")

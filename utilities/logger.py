@@ -2,7 +2,7 @@ import logging
 
 def logging_function():
     file_format = "%(asctime)s - %(levelname)s - %(message)s"
-    stdout_format = "%(asctime)s - %(message)s"
+    stdout_format = "%(message)s"
     root = logging.getLogger()
     root.setLevel(logging.INFO)
 
