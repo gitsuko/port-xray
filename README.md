@@ -7,6 +7,7 @@ A Python-based port scanner tool that supports service version grabbing.
 - Supports TCP scanning
 - Supports service version grabbing
 - Supports single and range IP scan
+- Read IP addresses from a file
 - CLI argument support with fallback to interactive mode
 
 ## Usage
