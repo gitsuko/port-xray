@@ -19,6 +19,11 @@ def args(get_host, get_port, get_timeout):
         type=get_host,
         help="IP address to scan"
     )
+    parser.add_argument(
+        "-A", "--address-file",
+        type=str,
+        help="Read IP address from file"
+    )
 
     parser.add_argument(
         "-p", "--port",

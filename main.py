@@ -96,6 +96,19 @@ def get_ip_range(ip_addr):
     
     return tuple(result)
 
+def get_ip_file(filename):
+    """
+    Reads IP address from a file.txt
+    """
+    try:
+        result = list()
+        with open(filename, "r") as ip_book:
+            for line in ip_book:
+                result.append(line[:-1])
+        return tuple(result)
+    except FileNotFoundError:
+        root.error("file does not exist!")
+        sys.exit(1)
 # ================= PROCESS USER'S INPUT =================
 subnet = False # Defalut value
 
@@ -161,8 +174,12 @@ if data.service_info:
 while True:
     try:
         if not hasattr(data, "address") or data.address is None:
-            address = input("Enter your IP address to scan: ")
-            data.address = get_ip_addr(address)
+            if data.address_file is not None:
+                filename = data.address_file
+                data.address = get_ip_file(filename)
+            else:
+                address = input("Enter your IP address to scan: ")
+                data.address = get_ip_addr(address)
         
         if not hasattr(data, "port") or data.port is None:
             port_input = input("enter port (e.g. 80 or 80-443): ")
