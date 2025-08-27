@@ -23,10 +23,6 @@ Or pass command-line arguments:
 python3 portxray.py -a 127.0.0.1 -p 80
 ```
 
-## Arguments
-![Arguments.png](./img/arguments.png)
-
-
 ## Planned Features
 
 - Add support for UDP scanning
