@@ -1,4 +1,4 @@
-# port-xray
+# portxray
 
 A Python-based port scanner tool that supports service version grabbing.
 
@@ -15,12 +15,12 @@ A Python-based port scanner tool that supports service version grabbing.
 Run the scanner interactively:
 
 ```bash
-python3 main.py
+python3 portxray.py
 ```
 Or pass command-line arguments:
 
 ```bash
-python3 main.py -a 127.0.0.1 -p 80
+python3 portxray.py -a 127.0.0.1 -p 80
 ```
 
 ## Arguments
